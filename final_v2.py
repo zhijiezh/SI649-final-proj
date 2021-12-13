@@ -43,7 +43,7 @@ with col1:
 with col3:
     st.text('Robots about to expire:')
     table_t = st.table(table_time)
-st.header('Family Tree with Information Count')
+st.header('Family Tree with Predicted Productivity')
 timevis2 = st.empty()
 st.header('Robot Productivity')
 smvis = st.empty()
@@ -693,12 +693,12 @@ for timeloop in np.arange(0, 100):
         robots_100 = robots.sort_values(by=['expires'], ignore_index=True)[:100]
         id_productivity = dict(zip(df.id, df.predicted_productivity))
         try:
-            top10_id = list(robots_100[robots_100.expires > curr_time].id[0:10])
-            top10_time = list(robots_100[robots_100.expires > curr_time].expires[0:10])
+            top10_id = list(robots_100[robots_100.expires > curr_time].id[0:9])
+            top10_time = list(robots_100[robots_100.expires > curr_time].expires[0:9])
             table_time['id'] = top10_id
             table_time['expire'] = top10_time
             table_time['p'] = table_time['id'].apply(lambda x: id_productivity[x])
-            table_time.index = pd.Series([1,2,3,4,5,6,7,8,9,10])
+            table_time.index = pd.Series([1,2,3,4,5,6,7,8,9])
             table_t.write(table_time)
         except:
             pass
@@ -750,7 +750,5 @@ for timeloop in np.arange(0, 100):
     # sleep for 6
     time.sleep(6)
 
-# Title
-st.title("Red Lake County is the BESTTTT! STFU Christopher Ingram")
 
 
