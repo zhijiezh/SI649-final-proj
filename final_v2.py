@@ -752,28 +752,3 @@ for timeloop in np.arange(0, 100):
 st.title("Red Lake County is the BESTTTT! STFU Christopher Ingram")
 
 
-# Display
-
-# def returnHelper(num):
-#   for _ in range(num):
-#     st.sidebar.write(' ')
-
-# Sidebar
-# dropdown_list = ['vis0','vis1','vis2','vis3']
-# vis_select = st.sidebar.selectbox(label="Select a visualization to display", options=dropdown_list)
-# pos = 0
-
-
-
-
-# if vis_select == dropdown_list[0]:
-#   st.write('vis0')
-
-# if vis_select == dropdown_list[1]:
-#   st.write('vis1')
-
-# if vis_select == dropdown_list[2]:
-#   st.write('vis2')
-
-# if vis_select == dropdown_list[3]:
-#   st.write('vis3')
