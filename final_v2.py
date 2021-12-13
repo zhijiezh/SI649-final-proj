@@ -1,5 +1,4 @@
-# Zhijie Zhao
-# si649f21 Interactive Project
+# si649f21 Group Project -- Robogame
 
 # imports we will use
 import json
@@ -29,15 +28,13 @@ KEY = "bob"
 # st.set_page_config(layout='wide')
 # let's create two "stree
 # pots" in the streamlit view for our charts
-# col_title, col_time = st.beta_columns((4,2))
-# with col_title:
-#     st.title('SI 649 Robogames -- Team VISION')
-# with col_time:
-#     current_game_time = st.empty()
-#     current_game_time.markdown(f'## Current game time: {0}')
-st.title('SI 649 Robogames -- Team VISION')
-current_game_time = st.empty()
-current_game_time.markdown(f'## Current game time: {0}')
+
+col_title, col_time = st.beta_columns((3,3))
+with col_title:
+    st.title('SI 649 Robogames -- Team VISION')
+with col_time:
+    current_game_time = st.empty()
+    current_game_time.markdown(f'## Current game time: {0}')
 st.header('Time-Value Plot for Top 5 Robots')
 # col1, col2, col3 = st.beta_columns((5,1,1))
 table_time =pd.DataFrame()
@@ -53,6 +50,7 @@ st.header('Family Tree with Information Count')
 timevis2 = st.empty()
 st.header('Robot Productivity')
 smvis = st.empty()
+st.header('Recommended Hacker Interests')
 
 
 
@@ -108,7 +106,7 @@ tree = game.getTree()
 genealogy = nx.tree_graph(tree)
 
 # initiating data structure, family: direct parents,children,siblings
-df = robots[['id']]
+df = robots[['id','expires']]
 df['family'] = df['id'].apply(lambda id: getParentChildrenSibling(id))
 df['dict'] = None
 df['locked'] = np.empty((len(df), 0)).tolist()
@@ -332,6 +330,7 @@ def timeseries_func(ts_df,robots, df=None, genealogy=None, current_time=None):
         
 
         id_infoCount = dict(zip(df.id, df.infoCount))
+        id_expires = dict(zip(df.id, df.expires))
         r,h = 3,3
         G = genealogy
         for rank in range(0,h+1):
@@ -342,6 +341,8 @@ def timeseries_func(ts_df,robots, df=None, genealogy=None, current_time=None):
         pos_df = pd.DataFrame.from_records(dict(id=k, x=x, y=y) for k,(x,y) in pos.items())
         node_df = pd.DataFrame.from_records(dict(data, **{'id': n}) for n,data in G.nodes.data())
         node_df['rank'] = node_df['id'].apply(lambda x: id_infoCount[x])
+        node_df['expires'] = node_df['id'].apply(lambda x: id_expires[x])
+        node_df['expires'] = node_df['expires'].fillna(0)
         node_df = node_df.rename(columns={'rank':'infoCount'})
         edge_data = ((dict(d, **{'edge_id':i, 'end':'source', 'id':s}),
                     dict(d, **{'edge_id':i, 'end':'target', 'id':t}))
@@ -359,7 +360,7 @@ def timeseries_func(ts_df,robots, df=None, genealogy=None, current_time=None):
         nodes = (
             alt.Chart(node_df)
             .mark_circle(size=200, opacity=1)
-            .encode(x=x, y=y, tooltip=['id', 'infoCount'], color=alt.Color('infoCount:Q', scale=alt.Scale(scheme="redblue")))
+            .encode(x=x, y=y, tooltip=['id', 'infoCount', 'expires'], color=alt.Color('infoCount:Q', scale=alt.Scale(scheme="redblue")))
             .transform_lookup(**node_position_lookup)
             .add_selection(selection_id)
         )
@@ -690,22 +691,25 @@ for timeloop in np.arange(0, 100):
         current_game_time.markdown(f'## Current game time: {str(curr_time)}')
         time_end = time.time()
         robots_100 = robots.sort_values(by=['expires'], ignore_index=True)[:100]
+        id_productivity = dict(zip(df.id, df.predicted_productivity))
         try:
             top10_id = list(robots_100[robots_100.expires > curr_time].id[5:12])
             top10_time = list(robots_100[robots_100.expires > curr_time].expires[5:12])
             table_time['id'] = top10_id
-            table_time['expires at'] = top10_time
+            table_time['expire'] = top10_time
+            table_time['p'] = table_time['id'].apply(lambda x: id_productivity[x])
             table_time.index = pd.Series([6,7,8,9,10,11,12])
             table_t.write(table_time)
         except:
             pass
         # draw timeseries vis & tree vis
-        ts_wth_fmly_df = time_series_df_func(df, robots)
-        ts_basic = timeseries_func(ts_wth_fmly_df, robots)
-        ts_top5_plot = top_5_time_series_func(
-            ts_wth_fmly_df, ts_basic, robots, current_time=curr_time)
-        ts_all_plot = timeseries_func(
-            ts_wth_fmly_df, robots, df, genealogy, curr_time)
+        try:
+            ts_wth_fmly_df = time_series_df_func(df, robots)
+            ts_basic = timeseries_func(ts_wth_fmly_df, robots)
+            ts_top5_plot = top_5_time_series_func(ts_wth_fmly_df, ts_basic, robots, current_time=curr_time)
+        except:
+            pass
+        ts_all_plot = timeseries_func(ts_wth_fmly_df, robots, df, genealogy, curr_time)
         timevis1.write(ts_top5_plot)
 
         timevis2.write(ts_all_plot)
