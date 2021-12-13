@@ -35,7 +35,7 @@ with col_time:
     current_game_time = st.empty()
     current_game_time.markdown(f'## Current game time: {0}')
 st.header('Time-Value Plot for Top 5 Robots')
-col1, col2, col3 = st.columns((3,3))
+col1, col2, col3 = st.columns((5,1,1))
 table_time =pd.DataFrame()
 
 with col1:
