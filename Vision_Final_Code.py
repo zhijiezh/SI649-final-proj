@@ -223,20 +223,21 @@ def time_series_df_func(hints_df, robots):
     robots_100 = robots.sort_values(by=['expires'], ignore_index=True)[:100]
     robots = robots.sort_values(by=['expires'], ignore_index=True)
     merge_df = robots_100.merge(hints_df, how='left')
-    time_list, value_list, id_list, family_list = [], [], [], []
+    time_list, value_list, original_list, id_list, family_list = [], [], [], [], []
     for index, row in robots_100.merge(hints_df, how='left').iterrows():
         i = row.dict
         if i is None:
             continue
         time_list += list(i.keys())
         value_list += list(i.values())
+        original_list += list(i.values())
         id_list += [row.id]*len(i.keys())
         family_list += [row.family]*len(i.keys())
     time_series_df = pd.DataFrame(
-        data=np.array([time_list, value_list, id_list, family_list]).T,
-        columns=['time', 'value', 'id', 'family']
+        data=np.array([time_list, value_list,original_list, id_list, family_list]).T,
+        columns=['time', 'value', 'original' ,'id', 'family']
     )
-    time_list, value_list, id_list = [], [], []
+    time_list, value_list, if_original, id_list = [], [], [], []
     for row in list(df.family):
         num = 0
         for i in row:
@@ -244,11 +245,15 @@ def time_series_df_func(hints_df, robots):
             time_list += list(time_series_df[time_series_df.id == i].time)
             value = time_series_df[time_series_df.id == i].value
             value_list += list(value)
+            if i == row[0]:
+              if_original += list([True]*len(value))
+            else:
+              if_original += list([False]*len(value))
             num += len(value)
         id_list += [i]*num
     ts_wth_fmly_df = pd.DataFrame(
-        data=np.array([time_list, value_list, id_list]).T,
-        columns=['time', 'value', 'id']
+        data=np.array([time_list, value_list, if_original, id_list]).T,
+        columns=['time', 'value', 'if_original', 'id']
     )
     return ts_wth_fmly_df
 
@@ -260,6 +265,7 @@ def timeseries_func(ts_df,robots, df=None, genealogy=None, current_time=None):
         filled=True,size=90).encode(
         x='time:Q',
         y='value:Q',
+        opacity=alt.condition(alt.datum.if_original == 1,alt.value(1),alt.value(0.2)),
         tooltip=['value:Q','id:N']
     ).properties(title="time vs value of all robots")
     
@@ -327,7 +333,7 @@ def timeseries_func(ts_df,robots, df=None, genealogy=None, current_time=None):
             color=colorCondition_id # step 4
         )
         ts_regression = ts_basic.add_selection(selection_id).transform_filter(
-            selection_id).transform_regression('time', 'value',method = 'quad').mark_line().properties(width=300, height=300)
+            selection_id).transform_regression('time', 'value',method = 'poly').mark_line().properties(width=300, height=300)
         
 
         id_infoCount = dict(zip(df.id, df.infoCount))
@@ -398,7 +404,7 @@ def top_5_time_series_func(ts_df, ts_basic, robots, current_time=0):
         alt.datum.id == top5_id[0]
     ).properties(title="Top1: id="+str(top5_id[0]) + ", expire time= " + str(top5_time[0]))
     top1_smooth = top1.transform_regression(
-        'time', 'value', method='quad').mark_line()
+        'time', 'value', method='poly').mark_line()
     line1 = alt.Chart(robots_100).mark_rule(color='red', size=2).encode(
         x='expires:Q').transform_filter(
         alt.datum.id == top5_id[0]
@@ -408,7 +414,7 @@ def top_5_time_series_func(ts_df, ts_basic, robots, current_time=0):
         alt.datum.id == top5_id[1]
     ).properties(title="Top2: id="+str(top5_id[1]) + ", expire time= " + str(top5_time[1]))
     top2_smooth = top2.transform_regression(
-        'time', 'value', method='quad').mark_line()
+        'time', 'value', method='poly').mark_line()
     line2 = alt.Chart(robots_100).mark_rule(color='red', size=2).encode(x='expires:Q').transform_filter(
         alt.datum.id == top5_id[1]
     )
@@ -416,7 +422,7 @@ def top_5_time_series_func(ts_df, ts_basic, robots, current_time=0):
         alt.datum.id == top5_id[2]
     ).properties(title="Top3: id="+str(top5_id[2]) + ", expire time= " + str(top5_time[2]))
     top3_smooth = top3.transform_regression(
-        'time', 'value', method='quad').mark_line()
+        'time', 'value', method='poly').mark_line()
     line3 = alt.Chart(robots_100).mark_rule(color='red', size=2).encode(x='expires:Q').transform_filter(
         alt.datum.id == top5_id[2]
     )
@@ -424,7 +430,7 @@ def top_5_time_series_func(ts_df, ts_basic, robots, current_time=0):
         alt.datum.id == top5_id[3]
     ).properties(title="Top4: id="+str(top5_id[3]) + ", expire time= " + str(top5_time[3]))
     top4_smooth = top4.transform_regression(
-        'time', 'value', method='quad').mark_line()
+        'time', 'value', method='poly').mark_line()
     line4 = alt.Chart(robots_100).mark_rule(color='red', size=2).encode(x='expires:Q').transform_filter(
         alt.datum.id == top5_id[3]
     )
@@ -432,7 +438,7 @@ def top_5_time_series_func(ts_df, ts_basic, robots, current_time=0):
         alt.datum.id == top5_id[4]
     ).properties(title="Top5: id="+str(top5_id[4]) + ", expire time= " + str(top5_time[4]))
     top5_smooth = top5.transform_regression(
-        'time', 'value', method='quad').mark_line()
+        'time', 'value', method='poly').mark_line()
     line5 = alt.Chart(robots_100).mark_rule(color='red', size=2).encode(x='expires:Q').transform_filter(
         alt.datum.id == top5_id[4]
     )
@@ -494,7 +500,7 @@ def smallmultiple(df):
         if(part not in nominal_list):
             part = part+':Q'
             charts.append(
-                chartTmplate.mark_point().encode(
+                chartTmplate.mark_point(filled=True,size=90).encode(
                     y=alt.Y('productivity:Q'),
                     x=alt.X(part, axis=alt.Axis(titleY=-215)),
                     tooltip=['id', 'productivity', part]
@@ -510,7 +516,7 @@ def smallmultiple(df):
     charts.append(
         chartTmplate.transform_filter(
             alt.datum['Axial Piston Model'] != "None"
-        ).mark_point().encode(
+        ).mark_point(filled=True,size=90).encode(
             y=alt.Y('productivity:Q'),
             x=alt.X('Axial Piston Model', axis=alt.Axis(titleY=-215)),
             tooltip=['id', 'productivity', 'Axial Piston Model']
@@ -526,7 +532,7 @@ def smallmultiple(df):
     charts.append(
         chartTmplate.transform_filter(
             alt.datum['Arakyd Vocabulator Model'] != "None"
-        ).mark_point().encode(
+        ).mark_point(filled=True,size=90).encode(
             y=alt.Y('productivity:Q'),
             x=alt.X('Arakyd Vocabulator Model', axis=alt.Axis(titleY=-215)),
             tooltip=['id', 'productivity', 'Arakyd Vocabulator Model']
@@ -542,7 +548,7 @@ def smallmultiple(df):
     charts.append(
         chartTmplate.transform_filter(
             alt.datum['Nanochip Model'] != "None"
-        ).mark_point().encode(
+        ).mark_point(filled=True,size=90).encode(
             y=alt.Y('productivity:Q'),
             x=alt.X('Nanochip Model', axis=alt.Axis(titleY=-215)),
             tooltip=['id', 'productivity', 'Nanochip Model']
@@ -716,12 +722,15 @@ for timeloop in np.arange(0, 100):
         except:
             pass
         # draw timeseries vis & tree vis
-        try:
-            ts_wth_fmly_df = time_series_df_func(df, robots)
-            ts_basic = timeseries_func(ts_wth_fmly_df, robots)
-            ts_top5_plot = top_5_time_series_func(ts_wth_fmly_df, ts_basic, robots, current_time=curr_time)
-        except:
-            pass
+        # try:
+        #     ts_wth_fmly_df = time_series_df_func(df, robots)
+        #     ts_basic = timeseries_func(ts_wth_fmly_df, robots)
+        #     ts_top5_plot = top_5_time_series_func(ts_wth_fmly_df, ts_basic, robots, current_time=curr_time)
+        # except:
+        #     pass
+        ts_wth_fmly_df = time_series_df_func(df, robots)
+        ts_basic = timeseries_func(ts_wth_fmly_df, robots)
+        ts_top5_plot = top_5_time_series_func(ts_wth_fmly_df, ts_basic, robots, current_time=curr_time)
         ts_all_plot = timeseries_func(ts_wth_fmly_df, robots, df, genealogy, curr_time)
         timevis1.write(ts_top5_plot)
 
