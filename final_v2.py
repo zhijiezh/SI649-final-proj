@@ -328,6 +328,7 @@ def timeseries_func(ts_df,robots, df=None, genealogy=None, current_time=None):
 
         id_infoCount = dict(zip(df.id, df.infoCount))
         id_expires = dict(zip(df.id, df.expires))
+        id_predicted_productivity = dict(zip(df.id, df.predicted_productivity))
         r,h = 3,3
         G = genealogy
         for rank in range(0,h+1):
@@ -339,6 +340,7 @@ def timeseries_func(ts_df,robots, df=None, genealogy=None, current_time=None):
         node_df = pd.DataFrame.from_records(dict(data, **{'id': n}) for n,data in G.nodes.data())
         node_df['rank'] = node_df['id'].apply(lambda x: id_infoCount[x])
         node_df['expires'] = node_df['id'].apply(lambda x: id_expires[x])
+        node_df['predicted_productivity'] = node_df['id'].apply(lambda x: id_predicted_productivity[x])
         node_df['expires'] = node_df['expires'].fillna(0)
         node_df = node_df.rename(columns={'rank':'infoCount'})
         edge_data = ((dict(d, **{'edge_id':i, 'end':'source', 'id':s}),
@@ -357,7 +359,7 @@ def timeseries_func(ts_df,robots, df=None, genealogy=None, current_time=None):
         nodes = (
             alt.Chart(node_df)
             .mark_circle(size=200, opacity=1)
-            .encode(x=x, y=y, tooltip=['id', 'infoCount', 'expires'], color=alt.Color('infoCount:Q', scale=alt.Scale(scheme="redblue")))
+            .encode(x=x, y=y, tooltip=['id', 'infoCount', 'expires', 'predicted_productivity:Q'], color=alt.condition(alt.datum.expires>curr_time,alt.Color('predicted_productivity:Q', scale=alt.Scale(scheme="redblue")),alt.value('grey')))
             .transform_lookup(**node_position_lookup)
             .add_selection(selection_id)
         )
@@ -393,7 +395,7 @@ def top_5_time_series_func(ts_df, ts_basic, robots, current_time=0):
     ).properties(title="Top1: id="+str(top5_id[0]) + ", expire time= " + str(top5_time[0]))
     top1_smooth = top1.transform_regression(
         'time', 'value', method='quad').mark_line()
-    line1 = alt.Chart(robots_100).mark_rule(color='green', size=2).encode(
+    line1 = alt.Chart(robots_100).mark_rule(color='red', size=2).encode(
         x='expires:Q').transform_filter(
         alt.datum.id == top5_id[0]
     )
@@ -403,7 +405,7 @@ def top_5_time_series_func(ts_df, ts_basic, robots, current_time=0):
     ).properties(title="Top2: id="+str(top5_id[1]) + ", expire time= " + str(top5_time[1]))
     top2_smooth = top2.transform_regression(
         'time', 'value', method='quad').mark_line()
-    line2 = alt.Chart(robots_100).mark_rule(color='green', size=2).encode(x='expires:Q').transform_filter(
+    line2 = alt.Chart(robots_100).mark_rule(color='red', size=2).encode(x='expires:Q').transform_filter(
         alt.datum.id == top5_id[1]
     )
     top3 = ts_basic.transform_filter(
@@ -411,7 +413,7 @@ def top_5_time_series_func(ts_df, ts_basic, robots, current_time=0):
     ).properties(title="Top3: id="+str(top5_id[2]) + ", expire time= " + str(top5_time[2]))
     top3_smooth = top3.transform_regression(
         'time', 'value', method='quad').mark_line()
-    line3 = alt.Chart(robots_100).mark_rule(color='green', size=2).encode(x='expires:Q').transform_filter(
+    line3 = alt.Chart(robots_100).mark_rule(color='red', size=2).encode(x='expires:Q').transform_filter(
         alt.datum.id == top5_id[2]
     )
     top4 = ts_basic.transform_filter(
@@ -419,7 +421,7 @@ def top_5_time_series_func(ts_df, ts_basic, robots, current_time=0):
     ).properties(title="Top4: id="+str(top5_id[3]) + ", expire time= " + str(top5_time[3]))
     top4_smooth = top4.transform_regression(
         'time', 'value', method='quad').mark_line()
-    line4 = alt.Chart(robots_100).mark_rule(color='green', size=2).encode(x='expires:Q').transform_filter(
+    line4 = alt.Chart(robots_100).mark_rule(color='red', size=2).encode(x='expires:Q').transform_filter(
         alt.datum.id == top5_id[3]
     )
     top5 = ts_basic.transform_filter(
@@ -427,7 +429,7 @@ def top_5_time_series_func(ts_df, ts_basic, robots, current_time=0):
     ).properties(title="Top5: id="+str(top5_id[4]) + ", expire time= " + str(top5_time[4]))
     top5_smooth = top5.transform_regression(
         'time', 'value', method='quad').mark_line()
-    line5 = alt.Chart(robots_100).mark_rule(color='green', size=2).encode(x='expires:Q').transform_filter(
+    line5 = alt.Chart(robots_100).mark_rule(color='red', size=2).encode(x='expires:Q').transform_filter(
         alt.datum.id == top5_id[4]
     )
     top1_all = (top1 + top1_smooth + line1).properties(
@@ -691,12 +693,12 @@ for timeloop in np.arange(0, 100):
         robots_100 = robots.sort_values(by=['expires'], ignore_index=True)[:100]
         id_productivity = dict(zip(df.id, df.predicted_productivity))
         try:
-            top10_id = list(robots_100[robots_100.expires > curr_time].id[5:12])
-            top10_time = list(robots_100[robots_100.expires > curr_time].expires[5:12])
+            top10_id = list(robots_100[robots_100.expires > curr_time].id[0:10])
+            top10_time = list(robots_100[robots_100.expires > curr_time].expires[0:10])
             table_time['id'] = top10_id
             table_time['expire'] = top10_time
             table_time['p'] = table_time['id'].apply(lambda x: id_productivity[x])
-            table_time.index = pd.Series([6,7,8,9,10,11,12])
+            table_time.index = pd.Series([1,2,3,4,5,6,7,8,9,10])
             table_t.write(table_time)
         except:
             pass
