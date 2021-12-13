@@ -673,7 +673,7 @@ for timeloop in np.arange(0, 100):
             if df.iloc[id][part] != np.NaN:
                 parts_dict[part] += 1
     # we ask for info on the top 3 parts we have least information of
-    parts_interest = heapq.nsmallest(3, parts_dict)
+    parts_interest = heapq.nsmallest(3, parts_dict, key=parts_dict.get)
 
     # show page to let users enter interests
     if 'Entering Interests' in selectbox:
