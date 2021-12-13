@@ -25,10 +25,9 @@ pd.options.mode.chained_assignment = None
 # our key
 KEY = "bob"
 
-# st.set_page_config(layout='wide')
+st.set_page_config(layout='wide')
 # let's create two "stree
 # pots" in the streamlit view for our charts
-
 col_title, col_time = st.beta_columns((3,3))
 with col_title:
     st.title('SI 649 Robogames -- Team VISION')
@@ -36,16 +35,14 @@ with col_time:
     current_game_time = st.empty()
     current_game_time.markdown(f'## Current game time: {0}')
 st.header('Time-Value Plot for Top 5 Robots')
-# col1, col2, col3 = st.beta_columns((5,1,1))
+col1, col2, col3 = st.beta_columns((5,1,1))
 table_time =pd.DataFrame()
-timevis1 = st.empty()
-st.text('Robots about to expire:')
-table_t = st.table(table_time)
-# with col1:
-#     timevis1 = st.empty()
-# with col3:
-#     st.text('Robots about to expire:')
-#     table_t = st.table(table_time)
+
+with col1:
+    timevis1 = st.empty()
+with col3:
+    st.text('Robots about to expire:')
+    table_t = st.table(table_time)
 st.header('Family Tree with Information Count')
 timevis2 = st.empty()
 st.header('Robot Productivity')
@@ -677,6 +674,7 @@ for timeloop in np.arange(0, 100):
                 parts_dict[part] += 1
     # we ask for info on the top 3 parts we have least information of
     parts_interest = heapq.nsmallest(3, parts_dict, key=parts_dict.get)
+
     # show page to let users enter interests
     if 'Entering Interests' in selectbox:
         parts_recommend.write('Recommended parts interest: '+",".join(parts_interest))
