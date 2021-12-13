@@ -28,14 +28,14 @@ KEY = "bob"
 st.set_page_config(layout='wide')
 # let's create two "stree
 # pots" in the streamlit view for our charts
-col_title, col_time = st.beta_columns((3,3))
+col_title, col_time = st.columns((3,3))
 with col_title:
     st.title('SI 649 Robogames -- Team VISION')
 with col_time:
     current_game_time = st.empty()
     current_game_time.markdown(f'## Current game time: {0}')
 st.header('Time-Value Plot for Top 5 Robots')
-col1, col2, col3 = st.beta_columns((5,1,1))
+col1, col2, col3 = st.columns((5,1,1))
 table_time =pd.DataFrame()
 
 with col1:
@@ -43,10 +43,14 @@ with col1:
 with col3:
     st.text('Robots about to expire:')
     table_t = st.table(table_time)
-st.header('Family Tree with Information Count')
+st.header('Family Tree with Predicted Productivity')
 timevis2 = st.empty()
 st.header('Robot Productivity')
-smvis = st.empty()
+col21, col22, col23 = st.columns((5,1,1))
+with col21:
+    smvis = st.empty()
+with col23:
+    boxPlot = st.empty()
 st.header('Recommended Hacker Interests')
 
 
@@ -328,6 +332,7 @@ def timeseries_func(ts_df,robots, df=None, genealogy=None, current_time=None):
 
         id_infoCount = dict(zip(df.id, df.infoCount))
         id_expires = dict(zip(df.id, df.expires))
+        id_predicted_productivity = dict(zip(df.id, df.predicted_productivity))
         r,h = 3,3
         G = genealogy
         for rank in range(0,h+1):
@@ -339,6 +344,7 @@ def timeseries_func(ts_df,robots, df=None, genealogy=None, current_time=None):
         node_df = pd.DataFrame.from_records(dict(data, **{'id': n}) for n,data in G.nodes.data())
         node_df['rank'] = node_df['id'].apply(lambda x: id_infoCount[x])
         node_df['expires'] = node_df['id'].apply(lambda x: id_expires[x])
+        node_df['predicted_productivity'] = node_df['id'].apply(lambda x: id_predicted_productivity[x])
         node_df['expires'] = node_df['expires'].fillna(0)
         node_df = node_df.rename(columns={'rank':'infoCount'})
         edge_data = ((dict(d, **{'edge_id':i, 'end':'source', 'id':s}),
@@ -357,7 +363,7 @@ def timeseries_func(ts_df,robots, df=None, genealogy=None, current_time=None):
         nodes = (
             alt.Chart(node_df)
             .mark_circle(size=200, opacity=1)
-            .encode(x=x, y=y, tooltip=['id', 'infoCount', 'expires'], color=alt.Color('infoCount:Q', scale=alt.Scale(scheme="redblue")))
+            .encode(x=x, y=y, tooltip=['id', 'infoCount', 'expires', 'predicted_productivity:Q'], color=alt.condition(alt.datum.expires>curr_time,alt.Color('predicted_productivity:Q', scale=alt.Scale(scheme="redblue")),alt.value('grey')))
             .transform_lookup(**node_position_lookup)
             .add_selection(selection_id)
         )
@@ -393,7 +399,7 @@ def top_5_time_series_func(ts_df, ts_basic, robots, current_time=0):
     ).properties(title="Top1: id="+str(top5_id[0]) + ", expire time= " + str(top5_time[0]))
     top1_smooth = top1.transform_regression(
         'time', 'value', method='quad').mark_line()
-    line1 = alt.Chart(robots_100).mark_rule(color='green', size=2).encode(
+    line1 = alt.Chart(robots_100).mark_rule(color='red', size=2).encode(
         x='expires:Q').transform_filter(
         alt.datum.id == top5_id[0]
     )
@@ -403,7 +409,7 @@ def top_5_time_series_func(ts_df, ts_basic, robots, current_time=0):
     ).properties(title="Top2: id="+str(top5_id[1]) + ", expire time= " + str(top5_time[1]))
     top2_smooth = top2.transform_regression(
         'time', 'value', method='quad').mark_line()
-    line2 = alt.Chart(robots_100).mark_rule(color='green', size=2).encode(x='expires:Q').transform_filter(
+    line2 = alt.Chart(robots_100).mark_rule(color='red', size=2).encode(x='expires:Q').transform_filter(
         alt.datum.id == top5_id[1]
     )
     top3 = ts_basic.transform_filter(
@@ -411,7 +417,7 @@ def top_5_time_series_func(ts_df, ts_basic, robots, current_time=0):
     ).properties(title="Top3: id="+str(top5_id[2]) + ", expire time= " + str(top5_time[2]))
     top3_smooth = top3.transform_regression(
         'time', 'value', method='quad').mark_line()
-    line3 = alt.Chart(robots_100).mark_rule(color='green', size=2).encode(x='expires:Q').transform_filter(
+    line3 = alt.Chart(robots_100).mark_rule(color='red', size=2).encode(x='expires:Q').transform_filter(
         alt.datum.id == top5_id[2]
     )
     top4 = ts_basic.transform_filter(
@@ -419,7 +425,7 @@ def top_5_time_series_func(ts_df, ts_basic, robots, current_time=0):
     ).properties(title="Top4: id="+str(top5_id[3]) + ", expire time= " + str(top5_time[3]))
     top4_smooth = top4.transform_regression(
         'time', 'value', method='quad').mark_line()
-    line4 = alt.Chart(robots_100).mark_rule(color='green', size=2).encode(x='expires:Q').transform_filter(
+    line4 = alt.Chart(robots_100).mark_rule(color='red', size=2).encode(x='expires:Q').transform_filter(
         alt.datum.id == top5_id[3]
     )
     top5 = ts_basic.transform_filter(
@@ -427,7 +433,7 @@ def top_5_time_series_func(ts_df, ts_basic, robots, current_time=0):
     ).properties(title="Top5: id="+str(top5_id[4]) + ", expire time= " + str(top5_time[4]))
     top5_smooth = top5.transform_regression(
         'time', 'value', method='quad').mark_line()
-    line5 = alt.Chart(robots_100).mark_rule(color='green', size=2).encode(x='expires:Q').transform_filter(
+    line5 = alt.Chart(robots_100).mark_rule(color='red', size=2).encode(x='expires:Q').transform_filter(
         alt.datum.id == top5_id[4]
     )
     top1_all = (top1 + top1_smooth + line1).properties(
@@ -558,9 +564,18 @@ def smallmultiple(df):
 
 # ========================================================================== smallmultiple
 
-
-
-
+# ========================================================================== boxplot
+def boxChart(df):
+    boxPlot = alt.Chart(df).transform_fold(
+        ["productivity","predicted_productivity"]
+    ).transform_filter(
+      alt.datum.value != 0
+    ).mark_boxplot(extent='min-max').encode(
+        x= alt.X('key:O', title=""),
+        y=alt.Y('value:Q', title="")
+    ).properties(width=150, height=600)
+    return boxPlot
+#   ========================================================================== boxplot
 # show select box. default is showing visualizations
 
 selectbox = st.sidebar.selectbox(
@@ -691,12 +706,12 @@ for timeloop in np.arange(0, 100):
         robots_100 = robots.sort_values(by=['expires'], ignore_index=True)[:100]
         id_productivity = dict(zip(df.id, df.predicted_productivity))
         try:
-            top10_id = list(robots_100[robots_100.expires > curr_time].id[5:12])
-            top10_time = list(robots_100[robots_100.expires > curr_time].expires[5:12])
+            top10_id = list(robots_100[robots_100.expires > curr_time].id[0:9])
+            top10_time = list(robots_100[robots_100.expires > curr_time].expires[0:9])
             table_time['id'] = top10_id
             table_time['expire'] = top10_time
             table_time['p'] = table_time['id'].apply(lambda x: id_productivity[x])
-            table_time.index = pd.Series([6,7,8,9,10,11,12])
+            table_time.index = pd.Series([1,2,3,4,5,6,7,8,9])
             table_t.write(table_time)
         except:
             pass
@@ -728,6 +743,10 @@ for timeloop in np.arange(0, 100):
         print('smMultiple time: ', time.time() - time_end)
         time_end = time.time()
 
+        # draw boxplot
+        boxPlotDiplay = boxChart(df)
+        boxPlot.write(boxPlotDiplay)
+
         # show recommended robot and parts interest
         parts_recommend.write('Recommended parts interest: '+",".join(parts_interest))
         robots_recommend.write('Recommended robot interest: ' +
@@ -748,32 +767,5 @@ for timeloop in np.arange(0, 100):
     # sleep for 6
     time.sleep(6)
 
-# Title
-st.title("Red Lake County is the BESTTTT! STFU Christopher Ingram")
 
 
-# Display
-
-# def returnHelper(num):
-#   for _ in range(num):
-#     st.sidebar.write(' ')
-
-# Sidebar
-# dropdown_list = ['vis0','vis1','vis2','vis3']
-# vis_select = st.sidebar.selectbox(label="Select a visualization to display", options=dropdown_list)
-# pos = 0
-
-
-
-
-# if vis_select == dropdown_list[0]:
-#   st.write('vis0')
-
-# if vis_select == dropdown_list[1]:
-#   st.write('vis1')
-
-# if vis_select == dropdown_list[2]:
-#   st.write('vis2')
-
-# if vis_select == dropdown_list[3]:
-#   st.write('vis3')
