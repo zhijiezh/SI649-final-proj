@@ -46,7 +46,11 @@ with col3:
 st.header('Family Tree with Predicted Productivity')
 timevis2 = st.empty()
 st.header('Robot Productivity')
-smvis = st.empty()
+col21, col22, col23 = st.columns((5,1,1))
+with col21:
+    smvis = st.empty()
+with col23:
+    boxPlot = st.empty()
 st.header('Recommended Hacker Interests')
 
 
@@ -560,9 +564,18 @@ def smallmultiple(df):
 
 # ========================================================================== smallmultiple
 
-
-
-
+# ========================================================================== boxplot
+def boxChart(df):
+    boxPlot = alt.Chart(df).transform_fold(
+        ["productivity","predicted_productivity"]
+    ).transform_filter(
+      alt.datum.value != 0
+    ).mark_boxplot(extent='min-max').encode(
+        x= alt.X('key:O', title=""),
+        y=alt.Y('value:Q', title="")
+    ).properties(width=150, height=600)
+    return boxPlot
+#   ========================================================================== boxplot
 # show select box. default is showing visualizations
 
 selectbox = st.sidebar.selectbox(
@@ -729,6 +742,10 @@ for timeloop in np.arange(0, 100):
         
         print('smMultiple time: ', time.time() - time_end)
         time_end = time.time()
+
+        # draw boxplot
+        boxPlotDiplay = boxChart(df)
+        boxPlot.write(boxPlotDiplay)
 
         # show recommended robot and parts interest
         parts_recommend.write('Recommended parts interest: '+",".join(parts_interest))
