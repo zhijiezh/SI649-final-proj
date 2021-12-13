@@ -28,14 +28,14 @@ KEY = "bob"
 st.set_page_config(layout='wide')
 # let's create two "stree
 # pots" in the streamlit view for our charts
-col_title, col_time = st.beta_columns((3,3))
+col_title, col_time = st.columns((3,3))
 with col_title:
     st.title('SI 649 Robogames -- Team VISION')
 with col_time:
     current_game_time = st.empty()
     current_game_time.markdown(f'## Current game time: {0}')
 st.header('Time-Value Plot for Top 5 Robots')
-col1, col2, col3 = st.beta_columns((5,1,1))
+col1, col2, col3 = st.columns((3,3))
 table_time =pd.DataFrame()
 
 with col1:
