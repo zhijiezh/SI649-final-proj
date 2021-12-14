@@ -625,10 +625,6 @@ if 'Entering Interests' in selectbox:
 
 
 time_end = time.time()
-robots = game.getRobotInfo()
-
-print('historyUpdate time: ', time.time() - time_end)
-time_end = time.time()
 
 # our main loop
 for timeloop in np.arange(0, 100):
