@@ -107,20 +107,24 @@ tree = game.getTree()
 genealogy = nx.tree_graph(tree)
 
 # initiating data structure, family: direct parents,children,siblings
-df = robots[['id','expires']]
-df['family'] = df['id'].apply(lambda id: getParentChildrenSibling(id))
-df['dict'] = None
-df['locked'] = np.empty((len(df), 0)).tolist()
-df['infoCount'] = 0
-df['predicted_productivity'] = 0
+try:
+  df = pd.read_pickle('df_temp.pkl')
+except:
+  df = robots[['id','expires']]
+  df['family'] = df['id'].apply(lambda id: getParentChildrenSibling(id))
+  df['dict'] = None
+  df['locked'] = np.empty((len(df), 0)).tolist()
+  df['infoCount'] = 0
+  df['predicted_productivity'] = 0
 
-for part in partList:
-    if(part in parts_nominal):
-        df[part] = None
-    else:
-        df[part] = np.NaN
-df.set_index('id', drop=False, inplace=True)
-df.index.name = None
+  for part in partList:
+      if(part in parts_nominal):
+          df[part] = None
+      else:
+          df[part] = np.NaN
+  df.set_index('id', drop=False, inplace=True)
+  df.index.name = None
+
 
 time_end = time.time()
 print('Import time: ', time_end-time_start)
@@ -150,11 +154,13 @@ game.setBets(initial_bets)
 def updateDf(hints, robot_df):
     predictionHints = hints['predictions']
     partsHints = hints['parts']
+    print('Prediction Hint length: ', len(predictionHints))
+    print('Part Hint length: ', len(partsHints))
     for hint in predictionHints:
         id = hint['id']
         time = hint['time']
         value = hint['value']
-
+        print(df.loc[id, 'locked'])
         df.loc[id, 'locked'].append(time)
 
         id_list = getParentChildrenSibling(id)
@@ -195,6 +201,7 @@ def updateDf(hints, robot_df):
     for part in parts_nominal:
         dfTmp['predicted_productivity'] += dfTmp[part].apply(lambda x: 1 if x in parts_coefficients[part] else 0)
     df['predicted_productivity'] = dfTmp['predicted_productivity']
+    df.to_pickle('df_temp.pkl')
     
 
 
@@ -616,17 +623,27 @@ if 'Entering Interests' in selectbox:
     except:
         input_robot_interest = []
 
+
+time_end = time.time()
+robots = game.getRobotInfo()
+
+print('historyUpdate time: ', time.time() - time_end)
+time_end = time.time()
+
 # our main loop
 for timeloop in np.arange(0, 100):
+    mainloopStart = time.time()
     print(parts_coefficients)
     # update df, get info
     lasthints = {}
     gametime = game.getGameTime()
     curr_time = gametime['curtime']
+    time_end = time.time()
     hints = game.getHints()
+    print('getHint time: ', time.time() - time_end)
+    time_end = time.time()
     robots = game.getRobotInfo()
     updateDf(hints, robots)
-
 
 
     print('update time: ', time.time() - time_end)
@@ -722,16 +739,21 @@ for timeloop in np.arange(0, 100):
         except:
             pass
         # draw timeseries vis & tree vis
-        # try:
-        #     ts_wth_fmly_df = time_series_df_func(df, robots)
-        #     ts_basic = timeseries_func(ts_wth_fmly_df, robots)
-        #     ts_top5_plot = top_5_time_series_func(ts_wth_fmly_df, ts_basic, robots, current_time=curr_time)
-        # except:
-        #     pass
-        ts_wth_fmly_df = time_series_df_func(df, robots)
-        ts_basic = timeseries_func(ts_wth_fmly_df, robots)
-        ts_top5_plot = top_5_time_series_func(ts_wth_fmly_df, ts_basic, robots, current_time=curr_time)
+        try:
+            time_end = time.time()
+            ts_wth_fmly_df = time_series_df_func(df, robots)
+            ts_basic = timeseries_func(ts_wth_fmly_df, robots)
+            print('Generate dataframe and basic diagram time: ', time.time() - time_end)
+            time_end = time.time()
+            ts_top5_plot = top_5_time_series_func(ts_wth_fmly_df, ts_basic, robots, current_time=curr_time)
+            print('top5 plot time: ', time.time() - time_end)
+            time_end = time.time()
+        except:
+            pass
+        
         ts_all_plot = timeseries_func(ts_wth_fmly_df, robots, df, genealogy, curr_time)
+        print('tree plot time: ', time.time() - time_end)
+        time_end = time.time()
         timevis1.write(ts_top5_plot)
 
         timevis2.write(ts_all_plot)
@@ -742,10 +764,10 @@ for timeloop in np.arange(0, 100):
 
 
         # draw small multiple
-        print("Number of productivity length",len(df[df['productivity'].notna()]))
-        if len(df[df['productivity'].notna()]) != 0:
+        nonNadf = df[df['productivity'].notna()]
+        if len(nonNadf) != 0:
             
-            smallmultipleVis = smallmultiple(df[df['productivity'].notna()])
+            smallmultipleVis = smallmultiple(nonNadf)
             smvis.write(smallmultipleVis)
         
         
@@ -773,8 +795,10 @@ for timeloop in np.arange(0, 100):
     print(robot_interest)
     print(parts_interest)
     # print(robots[['winner', 'Productivity']].groupby(['winner']).sum())
-    # sleep for 6
-    time.sleep(6)
+    # # sleep for 6
+    mainloopEnd = time.time()
+    if(mainloopEnd - mainloopStart < 6):
+      time.sleep(6 - (mainloopEnd - mainloopStart))
 
 
 
