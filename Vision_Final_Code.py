@@ -24,33 +24,40 @@ pd.options.mode.chained_assignment = None
 
 # our key
 KEY = "bob"
-
 st.set_page_config(layout='wide')
-# let's create two "stree
-# pots" in the streamlit view for our charts
-col_title, col_time = st.columns((3,3))
-with col_title:
-    st.title('SI 649 Robogames -- Team VISION')
-with col_time:
-    current_game_time = st.empty()
-    current_game_time.markdown(f'## Current game time: {0}')
-st.header('Time-Value Plot for Top 5 Robots')
-col1, col2, col3 = st.columns((5,1,1))
-table_time =pd.DataFrame()
 
-with col1:
-    timevis1 = st.empty()
-with col3:
-    st.text('Robots about to expire:')
-    table_t = st.table(table_time)
-st.header('Family Tree with Predicted Productivity')
-timevis2 = st.empty()
-st.header('Robot Productivity')
-col21, col22, col23 = st.columns((5,1,1))
-with col21:
-    smvis = st.empty()
-with col23:
-    boxPlot = st.empty()
+selectbox = st.sidebar.selectbox(
+    label="Select which page to display",
+    options=['Visualization', 'Entering Interests'], index=0, key = 'page_select'
+)
+
+if 'Visualization' in selectbox:
+
+  # let's create two "stree
+  # pots" in the streamlit view for our charts
+  col_title, col_time = st.columns((3,3))
+  with col_title:
+      st.title('SI 649 Robogames -- Team VISION')
+  with col_time:
+      current_game_time = st.empty()
+      current_game_time.markdown(f'## Current game time: {0}')
+  st.header('Time-Value Plot for Top 5 Robots')
+  col1, col2, col3 = st.columns((5,1,1))
+  table_time =pd.DataFrame()
+
+  with col1:
+      timevis1 = st.empty()
+  with col3:
+      st.text('Robots about to expire:')
+      table_t = st.table(table_time)
+  st.header('Family Tree with Predicted Productivity')
+  timevis2 = st.empty()
+  st.header('Robot Productivity')
+  col21, col22, col23 = st.columns((5,1,1))
+  with col21:
+      smvis = st.empty()
+  with col23:
+      boxPlot = st.empty()
 st.header('Recommended Hacker Interests')
 
 
@@ -591,11 +598,6 @@ def boxChart(df):
 #   ========================================================================== boxplot
 # show select box. default is showing visualizations
 
-selectbox = st.sidebar.selectbox(
-    label="Select which page to display",
-    options=['Visualization', 'Entering Interests'], index=0, key = 'page_select'
-)
-
 
 for part in parts_quant:
   parts_coefficients[part] = st.sidebar.slider(part,-1.0, 1.0, 0.0)
@@ -790,8 +792,8 @@ for timeloop in np.arange(0, 100):
     # print("our bets", bets)
     print(robot_interest)
     print(parts_interest)
-    # print(robots[['winner', 'Productivity']].groupby(['winner']).sum())
-    # # sleep for 6
+
+    # sleep to 6
     mainloopEnd = time.time()
     if(mainloopEnd - mainloopStart < 6):
       time.sleep(6 - (mainloopEnd - mainloopStart))
