@@ -105,8 +105,11 @@ def getParentChildrenSibling(id):
 
 
 # start game
-game = game = rg.Robogame(KEY,server="127.0.0.1",port=5000)
+# game = game = rg.Robogame(KEY,server="127.0.0.1",port=5000)
+game = rg.Robogame("VISION", server="roboviz.games")
+
 game.setReady()
+print("Set Ready")
 
 # read initial data
 robots = game.getRobotInfo()
@@ -137,20 +140,26 @@ time_end = time.time()
 print('Import time: ', time_end-time_start)
 
 game.getGameTime()
+print(game.getGameTime())
 
 while(True):
-    gametime = game.getGameTime()
-    timetogo = gametime['gamestarttime_secs'] - gametime['servertime_secs']
+   gametime = game.getGameTime()
+   print(gametime)
+   if ('Error' in gametime):
+       if (gametime['Error'] != 'Waiting on other team'):
+           print("Error"+str(gametime))
+           break
+       else:
+           print("Wating on other team")
+           time.sleep(1)
+   else:
+       timetogo = gametime['gamestarttime_secs'] - gametime['servertime_secs']
+       if (timetogo <= 0):
+           print("Let's go!")
+           break
+       print("waiting to launch... game will start in " + str(int(timetogo)))
+       time.sleep(1) # sleep 1 second at a time, wait for the game to start
 
-    if ('Error' in gametime):
-        print("Error"+str(gametime))
-        break
-    if (timetogo <= 0):
-        print("Let's go!")
-        break
-
-    print("waiting to launch... game will start in " + str(int(timetogo)))
-    time.sleep(1)  # sleep 1 second at a time, wait for the game to start
 
 initial_bets = {}
 for i in np.arange(0, 100):
@@ -737,17 +746,14 @@ for timeloop in np.arange(0, 100):
         except:
             pass
         # draw timeseries vis & tree vis
-        try:
-            time_end = time.time()
-            ts_wth_fmly_df = time_series_df_func(df, robots)
-            ts_basic = timeseries_func(ts_wth_fmly_df, robots)
-            print('Generate dataframe and basic diagram time: ', time.time() - time_end)
-            time_end = time.time()
-            ts_top5_plot = top_5_time_series_func(ts_wth_fmly_df, ts_basic, robots, current_time=curr_time)
-            print('top5 plot time: ', time.time() - time_end)
-            time_end = time.time()
-        except:
-            pass
+        time_end = time.time()
+        ts_wth_fmly_df = time_series_df_func(df, robots)
+        ts_basic = timeseries_func(ts_wth_fmly_df, robots)
+        print('Generate dataframe and basic diagram time: ', time.time() - time_end)
+        time_end = time.time()
+        ts_top5_plot = top_5_time_series_func(ts_wth_fmly_df, ts_basic, robots, current_time=curr_time)
+        print('top5 plot time: ', time.time() - time_end)
+        time_end = time.time()
         
         ts_all_plot = timeseries_func(ts_wth_fmly_df, robots, df, genealogy, curr_time)
         print('tree plot time: ', time.time() - time_end)
